@@ -1,0 +1,13 @@
+{% extends 'base_generic.html' %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{{ tour.name }}</h2>
+  <p>{% trans "Description:" %} {{ tour.description }}</p>
+  <p>{% trans "Price:" %} {{ tour.price }}</p>
+  <p>{% trans "Date:" %} {{ tour.date }}</p>
+  <p>{% trans "Stars:" %} {{ tour.calculate_stars }}</p> <!-- Hiển thị dấu sao -->
+  {% for image in tour.image_set.all %}
+    <img src="{{ image.image.url }}" alt="Tour Image" class="mt-2" width="50%" height="50%">
+  {% endfor %}
+{% endblock %}
