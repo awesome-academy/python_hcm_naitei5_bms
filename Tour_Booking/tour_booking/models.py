@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 class User(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -30,26 +31,28 @@ class Tour(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
     average_rating = models.DecimalField(max_digits=5, decimal_places=2)
+  
+
+    def get_absolute_url(self):
+        """Returns the url to access a particular book instance."""
+        return reverse('tour-detail', args=[str(self.id)])
 
     def __str__(self):
         return self.name
+
+    def calculate_stars(self):
+        avg_rating = self.average_rating
+        if avg_rating >= 4.5:
+            return "★★★★★"
+        elif avg_rating >= 3.5:
+            return "★★★★☆"
+        elif avg_rating >= 2.5:
+            return "★★★☆☆"
+        elif avg_rating >= 1.5:
+            return "★★☆☆☆"
+        else:
+            return "★☆☆☆☆"
         
-    def calculate_average_rating(self):
-            # Lấy tất cả các đánh giá của tour du lịch
-        ratings = Rating.objects.filter(tour=self)
-
-        # Tính tổng các đánh giá
-        total_ratings = sum(rating.value for rating in ratings)
-
-        # Kiểm tra nếu không có đánh giá nào, tránh chia cho 0
-        if not ratings.exists():
-            return 0
-
-        # Tính trung bình các đánh giá
-        average = total_ratings / len(ratings)
-
-        # Làm tròn kết quả đến 2 chữ số thập phân
-        return round(average, 2)
 
 class Image(models.Model):
     id = models.BigAutoField(primary_key=True)

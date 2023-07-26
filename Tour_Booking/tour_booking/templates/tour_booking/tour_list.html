@@ -1,0 +1,20 @@
+{% extends "base_generic.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1>{% trans "Tour List" %}</h1>
+  {% if tour_list %}
+    <ul>
+      {% for tour in tour_list %}
+        <li>
+          <a href="{{ tour.get_absolute_url }}">{{ tour.name }}</a> - {{ tour.price }}
+        </li>
+        {% for image in tour.image_set.all %}
+    <img src="{{ image.image.url }}" alt="Tour Image" class="mt-2"  width="30%" height="20%">
+  {% endfor %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>There are no tours available.</p>
+  {% endif %}
+{% endblock %}

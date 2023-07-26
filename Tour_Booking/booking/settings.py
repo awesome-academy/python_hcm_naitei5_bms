@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'tour_booking.apps.TourBookingConfig',
+    'bootstrap5',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -113,19 +114,28 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
 LANGUAGES = [
     ('en', 'English'),
     ('vi', 'Tiếng Việt'),
-    # Add more languages as needed
+    # Thêm các ngôn ngữ khác nếu cần
 ]
 
-TIME_ZONE = 'UTC'
+# Đặt ngôn ngữ mặc định cho trang web
+LANGUAGE_CODE = 'en'
 
+# Bật hỗ trợ i18n
 USE_I18N = True
 
+# Bật hỗ trợ l10n (localization - địa phương hóa)
+USE_L10N = True
+
+# Bật hỗ trợ timezone
 USE_TZ = True
+
+# Đường dẫn đến thư mục chứa các file ngôn ngữ dịch
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 
 # Static files (CSS, JavaScript, Images)
@@ -137,3 +147,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+import os
+
+# Định nghĩa đường dẫn đến thư mục lưu trữ phương tiện (MEDIA_ROOT)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Định nghĩa URL để truy cập vào phương tiện (MEDIA_URL)
+MEDIA_URL = '/media/'
