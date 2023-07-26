@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-26 11:39+0700\n"
+"POT-Creation-Date: 2023-07-26 04:33-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,13 +22,39 @@ msgstr ""
 msgid "Booking Tour"
 msgstr "Đặt Tour"
 
-#: tour_booking/templates/base_generic.html:25
+#: tour_booking/templates/base_generic.html:21
 msgid "Home"
 msgstr "Trang chủ"
 
-#: tour_booking/templates/base_generic.html:26
+#: tour_booking/templates/base_generic.html:22
+#: tour_booking/templates/tour_booking/tour_list.html:5
 msgid "Tour List"
 msgstr "Danh sách Tour"
+
+#: tour_booking/templates/base_generic.html:23
+msgid "About"
+msgstr "About"
+
+#: tour_booking/templates/base_generic.html:25
+msgid "Logout"
+msgstr "Đăng xuất"
+
+#: tour_booking/templates/base_generic.html:27
+#: tour_booking/templates/login.html:9 tour_booking/templates/login.html:17
+msgid "Login"
+msgstr "Đăng nhập"
+
+#: tour_booking/templates/login.html:13
+msgid "User name:"
+msgstr "Tên đăng nhập"
+
+#: tour_booking/templates/login.html:15
+msgid "Password:"
+msgstr "Mật khẩu"
+
+#: tour_booking/templates/login.html:19
+msgid "Forgot password?"
+msgstr "Quên mật khẩu"
 
 #: tour_booking/templates/tour_booking/tour_detail.html:6
 msgid "Description:"
@@ -43,7 +69,7 @@ msgid "Date:"
 msgstr "Ngày"
 
 #: tour_booking/templates/tour_booking/tour_detail.html:9
-msgid "Rating:"
+msgid "Stars:"
 msgstr "Đánh giá"
 
 #: tour_booking/views.py:9
