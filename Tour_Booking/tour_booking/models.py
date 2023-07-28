@@ -25,16 +25,16 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.is_active}"
 
 class Tour(models.Model):
-    id = models.BigAutoField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    date = models.DateField()
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
     average_rating = models.DecimalField(max_digits=5, decimal_places=2)
-  
-
+    location = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add= True)
     def get_absolute_url(self):
-        """Returns the url to access a particular book instance."""
         return reverse('tour-detail', args=[str(self.id)])
 
     def __str__(self):
@@ -55,7 +55,7 @@ class Tour(models.Model):
         
 
 class Image(models.Model):
-    id = models.BigAutoField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='tour_images/')
 
