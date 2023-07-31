@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
 from django.utils.translation import gettext
 from django.views import generic
-from .models import Tour
+from .models import Tour, Booking
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .models import Tour
-from .forms import TourSearchForm
+from django.urls import reverse
+from .forms import TourSearchForm,BookingForm
+
 # Create your views here.
 def index(request):
     context = {"title": gettext("Home Page")}
@@ -14,10 +16,6 @@ def index(request):
 
 class TourListView(generic.ListView):
     model = Tour
-
-class TourDetailView(generic.DetailView):
-    model = Tour
-
 
 
 def login_view(request):
@@ -69,3 +67,38 @@ def search_view(request):
         'form': form,
     }
     return render(request, 'tour_booking/tour_list.html', context)
+
+# Tour_Detail & Book_tour
+class TourDetailView(generic.DetailView):
+    model = Tour
+    template_name = 'tour_booking/tour_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = BookingForm()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        tour = self.get_object()
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking = form.save(commit=False)
+            booking.user = request.user
+            booking.tour = tour
+            booking.status = 'Pending'
+            booking.price = tour.price * int(form.cleaned_data['number_of_people'])
+            booking.save()
+
+            return redirect(reverse('tour-detail', args=[str(tour.pk)]))
+        else:
+            context = self.get_context_data(**kwargs)
+            context['form'] = form
+            return self.render_to_response(context)
+
+
+#List-Booking
+
+@login_required
+def list_bookings(request):
+    bookings = Booking.objects.filter(user=request.user)
+    return render(request, 'tour_booking/list_bookings.html', {'bookings': bookings})

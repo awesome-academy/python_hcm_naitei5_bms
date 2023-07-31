@@ -10,4 +10,13 @@
   {% for image in tour.image_set.all %}
     <img src="{{ image.image.url }}" alt="Tour Image" class="mt-2" width="50%" height="50%">
   {% endfor %}
+  <h2>Đặt tour</h2>
+  {% if error_message %}
+    <p style="color: red;">{{ error_message }}</p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% trans "Book Tour" %}</button>
+  </form>
 {% endblock %}

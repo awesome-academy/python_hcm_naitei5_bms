@@ -1,0 +1,25 @@
+{% extends 'base_generic.html' %}
+{% load i18n %}
+
+{% block content %}
+  <h2>{% trans "List Booking" %}</h2>
+  {% if bookings %}
+    <ul>
+      {% for booking in bookings %}
+        <li>
+          {% trans "Tour:" %} {{ booking.tour.name }} |
+          {% trans "Departure Date:" %} {{ booking.departure_date }} |
+          {% trans "End Daye:" %} {{ booking.end_date }} |
+          {% trans "Number:" %} {{ booking.number_of_people }} |
+          {% trans "Price:" %} {{ booking.price }} |
+          {% trans "Status:" %} 
+        <span {% if booking.status == 'Pending' %}class="pending-booking"{% endif %}>
+          {{ booking.status }}
+        </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>{% trans "You don't have any tours booked yet." %}</p>
+  {% endif %}
+{% endblock %}
