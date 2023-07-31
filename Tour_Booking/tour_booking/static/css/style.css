@@ -106,3 +106,9 @@ color: #429d87;
 .nav_ul {
 padding: 0px;
 }
+
+.pending-booking {
+  background-color: yellow;
+  font-weight: bold;
+  border: 1px solid rgb(5, 5, 5); 
+}

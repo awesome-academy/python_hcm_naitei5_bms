@@ -4,6 +4,7 @@
   <li><a href="{% url 'search' %}">{% trans "Tour List" %}</a></li>
   <li><a href="{% url 'index' %}">{% trans "About" %}</a></li>
   {% if user.is_authenticated %}
+  <li><a href="{% url 'list-bookings' %}">{% trans "List Booking" %}</a></li>
   <li><a href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
   {% else %}
   <li><a href="{% url 'login' %}">{% trans "Login" %}</a></li>

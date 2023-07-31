@@ -1,5 +1,7 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 class User(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -63,13 +65,26 @@ class Image(models.Model):
         return f"Image {self.id} for Tour {self.tour.name}"
 
 class Booking(models.Model):
-    #user = models.ForeignKey(User, on_delete=models.CASCADE)
-    #tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
+    STATUS_CHOICES = (
+        ('Pending', 'Pending'),
+        ('Confirmed', 'Confirmed'),
+        ('Cancelled', 'Cancelled'),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
     status = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add= True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     number_of_people = models.CharField(max_length=255)
     departure_date = models.DateTimeField()
+    end_date = models.DateField()
+
+    def clean(self):
+        current_date = timezone.now().date()
+
+        if self.departure_date <= current_date:
+            raise ValidationError("Ngày khởi hành phải lớn hơn ngày hiện tại.")
 
     def __str__(self):
         return f"{self.user.username} - {self.tour.name} - {self.status}"
