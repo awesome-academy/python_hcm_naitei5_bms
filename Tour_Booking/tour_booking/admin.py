@@ -6,9 +6,9 @@ class ImageInline(admin.TabularInline):
     model = Image
 
 class TourAmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'date')
+    list_display = ('name', 'price', 'start_date','end_date','location','created_at' )
     search_fields = ('name',)
-    list_filter = ('date',)
+    filter = ('start_date','end_date','location','created_at')
     inlines = [ImageInline]
 
 admin.site.register(Tour, TourAmin)
