@@ -10,4 +10,5 @@ urlpatterns = [
     path('search/', views.search_view, name='search'),
     path('bookings/', views.list_bookings, name='list-bookings'),
     path('tour/<int:pk>/rate-comment/', views.tour_rating_comment, name='tour-rating-comment'),
+    path('approve-tours/', views.approve_tours, name='approve-tours'),
 ]
