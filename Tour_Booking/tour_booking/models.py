@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class User(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -54,6 +55,17 @@ class Tour(models.Model):
             return "★★☆☆☆"
         else:
             return "★☆☆☆☆"
+
+    def has_pending_booking(self):
+        return self.booking_set.filter(status='Pending').exists()
+
+    def has_future_bookings(self):
+        return self.booking_set.filter(status='Confirmed', departure_date__gte=timezone.now()).exists()
+
+    def delete(self, *args, **kwargs):
+        if self.has_pending_booking() or self.has_future_bookings():
+            raise ValueError("Không thể xóa Tour khi có đơn đặt đang chờ xử lý hoặc được xác nhận trong tương lai.")
+        super().delete(*args, **kwargs)
         
 
 class Image(models.Model):
@@ -79,6 +91,8 @@ class Booking(models.Model):
     number_of_people = models.CharField(max_length=255)
     departure_date = models.DateTimeField()
     end_date = models.DateField()
+    is_approved = models.BooleanField(default=False)
+    is_cancelled = models.BooleanField(default=False) 
 
     def clean(self):
         current_date = timezone.now().date()
@@ -93,9 +107,12 @@ class Rating(models.Model):
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
-    rating = models.IntegerField()
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     content = models.TextField()
     create_time = models.DateTimeField(auto_now_add= True)
+
+    def get_star_rating(self):
+        return "★" * self.rating
 
     def __str__(self):
         return f"{self.user.username} - {self.tour.name} - {self.rating}"

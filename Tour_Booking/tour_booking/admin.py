@@ -1,6 +1,7 @@
 # admin.py
 from django.contrib import admin
 from .models import Tour, Booking, Image, Rating
+from django.core.exceptions import ValidationError
 
 class ImageInline(admin.TabularInline):
     model = Image
@@ -17,6 +18,37 @@ admin.site.register(Tour, TourAmin)
 class BookingAmin(admin.ModelAdmin):
     list_display = ( 'status', 'created_at', 'departure_date')
     list_filter = ('status', 'created_at', 'departure_date')
+    readonly_fields = ('tour', 'user', 'created_at', 'departure_date','price','end_date','number_of_people')
+    actions = ['approve_booking']
+
+    def approve_booking(self, request, queryset):
+        for booking in queryset:
+            if booking.status == 'Pending':
+                booking.status = 'Confirmed'
+                booking.is_approved = True
+                booking.save()
+
+    approve_booking.short_description = 'Phê duyệt các đơn đặt Tour đã chọn'
+
+    def save_model(self, request, obj, form, change):
+        obj.approved_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def delete_model(self, request, obj):
+        if obj.tour.has_pending_booking() or obj.tour.has_future_bookings():
+            raise ValidationError(
+                "Không thể xóa Tour khi có đơn đặt đang chờ xử lý hoặc được xác nhận."
+            )
+        obj.delete()
+
+    def delete_queryset(self, request, queryset):
+        for booking in queryset:
+            if booking.tour.has_pending_booking() or booking.tour.has_future_bookings():
+                raise ValidationError(
+                    f"Không thể xóa Tour '{booking.tour.name}' khi có đơn đặt đang chờ xử lý hoặc được xác nhận."
+                )
+        queryset.delete()
+
 
 admin.site.register(Booking, BookingAmin)
 
