@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import Booking
+from .models import Booking, Rating
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class TourSearchForm(forms.Form):
     query = forms.CharField(label=_('key search'), max_length=100, required=False)
@@ -28,3 +29,14 @@ class BookingForm(forms.ModelForm):
             raise forms.ValidationError("Ngày khởi hành phải lớn hơn ngày hiện tại.")
         
         return departure_date
+
+class RatingCommentForm(forms.ModelForm):
+    rating = forms.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        label='Rating',
+        help_text='Choose a rating from 1 to 5.'
+    )
+
+    class Meta:
+        model = Rating
+        fields = ('rating', 'content')

@@ -16,6 +16,13 @@
         <span {% if booking.status == 'Pending' %}class="pending-booking"{% endif %}>
           {{ booking.status }}
         </span>
+      {% if booking.status == 'Pending' %}
+        <form method="post">
+          {% csrf_token %}
+            <input type="hidden" name="booking_id" value="{{ booking.id }}">
+            <button type="submit">{% trans "Delete" %}</button>
+        </form>
+      {% endif %}
         </li>
       {% endfor %}
     </ul>

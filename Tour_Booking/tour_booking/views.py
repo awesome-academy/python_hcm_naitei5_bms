@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext
 from django.views import generic
 from .models import Tour, Booking
@@ -6,7 +6,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.urls import reverse
-from .forms import TourSearchForm,BookingForm
+from .forms import TourSearchForm,BookingForm, RatingCommentForm
+from django.http import HttpResponse
 
 # Create your views here.
 def index(request):
@@ -102,3 +103,34 @@ class TourDetailView(generic.DetailView):
 def list_bookings(request):
     bookings = Booking.objects.filter(user=request.user)
     return render(request, 'tour_booking/list_bookings.html', {'bookings': bookings})
+
+#Comment
+
+@login_required
+def tour_rating_comment(request, pk):
+    tour = get_object_or_404(Tour, pk=pk)
+
+    try:
+        booking = Booking.objects.filter(user=request.user, tour=tour).first()
+    except Booking.DoesNotExist:
+        booking = None
+
+    if not booking or not booking.is_approved:
+        return HttpResponse("Bạn chưa được admin xác nhận, không thể bình luận.") 
+
+    if request.method == 'POST':
+        rating_comment_form = RatingCommentForm(request.POST)
+        if rating_comment_form.is_valid():
+            rating = rating_comment_form.save(commit=False)
+            rating.user = request.user
+            rating.tour = tour
+            rating.save()
+
+            booking.is_approved = True
+            booking.save()
+
+            return redirect(reverse('tour-detail', args=[str(tour.pk)]))
+    else:
+        rating_comment_form = RatingCommentForm()
+
+    return render(request, 'tour_booking/tour_detail.html', {'tour': tour, 'rating_comment_form': rating_comment_form})

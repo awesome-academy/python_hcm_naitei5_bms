@@ -10,7 +10,21 @@
   {% for image in tour.image_set.all %}
     <img src="{{ image.image.url }}" alt="Tour Image" class="mt-2" width="50%" height="50%">
   {% endfor %}
-  <h2>Đặt tour</h2>
+  {% if user.is_authenticated %}
+  <h2>{% trans "Rating and comment" %}</h2>
+  <form method="post" action="{% url 'tour-rating-comment' tour.pk %}">
+    {% csrf_token %}
+    {{ rating_comment_form.as_p }}
+    <button type="submit">{% trans "Submit ratings and comments" %}</button>
+  </form>
+{% endif %}
+<p><h2>{% trans "Comment" %}</h2></p>
+{% for comment in tour.rating_set.all %}
+  <h5>{{ comment.user.username }} - {{ comment.create_time }}</h5>
+  <p>{{ comment.get_star_rating }}</p>
+  <p>{{ comment.content }}</p>
+{% endfor %}
+  <h2>{% trans "Book tour" %}</h2>
   {% if error_message %}
     <p style="color: red;">{{ error_message }}</p>
   {% endif %}
