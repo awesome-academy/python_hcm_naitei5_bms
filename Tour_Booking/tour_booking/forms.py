@@ -1,3 +1,6 @@
+import re
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import Booking, Rating
@@ -40,3 +43,19 @@ class RatingCommentForm(forms.ModelForm):
     class Meta:
         model = Rating
         fields = ('rating', 'content')
+
+
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(max_length=255, required=True)
+    
+    def clean_password1(self):
+        password = self.cleaned_data.get("password1")
+        if len(password) < 8:
+            raise forms.ValidationError("Mật khẩu phải có ít nhất 8 ký tự.")
+        if not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password) or not re.search(r'[0-9\W]', password):
+            raise forms.ValidationError("Mật khẩu phải có ít nhất 3 loại ký tự: chữ thường, viết hoa, số, và ký tự đặc biệt.")
+        return password
+    
+    class Meta:
+        model = User
+        fields = ("username", "email", "password1", "password2")
