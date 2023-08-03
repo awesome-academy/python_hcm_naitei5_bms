@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -152,6 +154,13 @@ import os
 
 # Định nghĩa đường dẫn đến thư mục lưu trữ phương tiện (MEDIA_ROOT)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_FROM_EMAIL = os.getenv("MAIL")
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Outputs emails to the console for testing
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587  # Replace with the correct email port
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("MAIL")
+EMAIL_HOST_PASSWORD = os.getenv("PASS")
 
 # Định nghĩa URL để truy cập vào phương tiện (MEDIA_URL)
 MEDIA_URL = '/media/'

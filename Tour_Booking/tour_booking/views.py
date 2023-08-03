@@ -1,12 +1,18 @@
+import uuid
 from django.shortcuts import render, redirect, get_object_or_404
-from django.utils.translation import gettext
+from django.utils.translation import gettext as _
 from django.views import generic
 from .models import Tour, Booking
-from django.contrib.auth import authenticate, login, logout
+from .forms import TourSearchForm, BookingForm, RatingCommentForm, CustomUserCreationForm
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from django.urls import reverse
-from .forms import TourSearchForm,BookingForm, RatingCommentForm
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_text
+from django.contrib import messages
+from django.utils.translation import gettext
+from django.utils import timezone
+from django.urls import reverse,reverse_lazy
+from .mail import send_mail_custom
 from django.http import HttpResponse
 
 # Create your views here.
@@ -134,3 +140,56 @@ def tour_rating_comment(request, pk):
         rating_comment_form = RatingCommentForm()
 
     return render(request, 'tour_booking/tour_detail.html', {'tour': tour, 'rating_comment_form': rating_comment_form})
+
+# Sign Up
+
+def sign_up(request):
+    context = {}
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data["username"]
+            email = form.cleaned_data["email"]
+            password = form.cleaned_data["password1"]
+            token = uuid.uuid4()
+            user = get_user_model().objects.create_user(username, email, password)
+            user.is_active = False
+            user.save()
+            HOST = "http://localhost:8000"
+            link =  HOST + reverse_lazy("login")
+            send_mail_custom(
+                gettext("You have successfully registered an account at Tour Booking"),
+                email,
+                None,
+                "email/activation_email.html",
+                link=link,
+                username = username,
+            )
+            return redirect("send-mail-success")
+            
+    else:
+        form = CustomUserCreationForm()
+    return render(request, "signup.html", {"form": form})
+
+
+def activate_account(request, uidb64):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = get_user_model().objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, get_user_model().DoesNotExist):
+        user = None
+
+    if user is not None:
+        user.is_active = True
+        user.save()
+        messages.success(request, _("Your account has been activated. You can now log in."))
+        return redirect("login")
+    else:
+        messages.error(request, _("Invalid activation link."))
+        return render(request, "email/send_mail_success.html")
+
+# Send Mail
+
+def send_mail_success(request):
+    context={}
+    return render(request, "email/send_mail_success.html", context=context)
