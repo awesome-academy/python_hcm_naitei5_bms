@@ -15,6 +15,9 @@ from django.urls import reverse,reverse_lazy
 from .mail import send_mail_custom
 from django.http import HttpResponse
 from django.contrib import messages
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.conf import settings
 
 # Create your views here.
 def index(request):
@@ -104,10 +107,28 @@ class TourDetailView(generic.DetailView):
             return self.render_to_response(context)
 
 
+def send_booking_email(user, tour, subject_template, email_template):
+    message = render_to_string(email_template, {'user': user, 'tour': tour})
+    send_mail(subject_template, message, settings.EMAIL_HOST_USER, [user.email], html_message=message)
+
 #List-Booking
 
 @login_required
 def list_bookings(request):
+    if request.method == 'POST':
+        booking_id = request.POST.get('booking_id')
+
+        if booking_id:
+            booking = get_object_or_404(Booking, pk=booking_id, user=request.user)
+
+            if booking.status == 'Pending':
+                # Lưu trạng thái hủy đơn và gửi email thông báo
+                booking.status = 'Cancelled'
+                booking.save()
+
+                # Gửi email thông báo hủy đơn thành công
+                send_booking_email(booking.user, booking.tour, 'Hủy đơn đặt tour', 'email/email_notification_cancelled.html')
+
     bookings = Booking.objects.filter(user=request.user)
     return render(request, 'tour_booking/list_bookings.html', {'bookings': bookings})
 
@@ -150,9 +171,25 @@ def approve_tours(request):
         action = request.POST.get('action')
 
         if action == 'approve':
-            Booking.objects.filter(pk__in=selected_bookings).update(is_approved=True, status='Confirmed')
+            bookings_to_approve = Booking.objects.filter(pk__in=selected_bookings, status='Pending')
+            for booking in bookings_to_approve:
+                booking.is_approved = True
+                booking.status = 'Confirmed'
+                booking.save()
+
+                # Gửi email thông báo phê duyệt
+                send_booking_email(booking.user, booking.tour, 'Xác nhận đơn đặt tour', 'email/email_notification_approved.html')
+
         elif action == 'cancel':
-            Booking.objects.filter(pk__in=selected_bookings, status='Pending').update(is_cancelled=True, status='Cancelled')
+            bookings_to_cancel = Booking.objects.filter(pk__in=selected_bookings, status='Pending')
+            for booking in bookings_to_cancel:
+                booking.is_cancelled = True
+                booking.status = 'Cancelled'
+                booking.save()
+
+                # Gửi email thông báo hủy đơn thành công
+                send_booking_email(booking.user, booking.tour, 'Hủy đơn đặt tour', 'email/email_notification_cancelled.html')
+
         elif action == 'delete':
             bookings_to_delete = Booking.objects.filter(pk__in=selected_bookings)
             confirmed_or_pending_bookings = bookings_to_delete.filter(status__in=['Pending', 'Confirmed'])
@@ -161,8 +198,10 @@ def approve_tours(request):
             else:
                 bookings_to_delete.filter(status='Cancelled').delete()
 
-    bookings = Booking.objects.all()  # Lấy tất cả các đơn đặt tour
+    bookings = Booking.objects.all()
     return render(request, 'admin/approve_tours.html', {'bookings': bookings})
+
+
 # Sign Up
 
 def sign_up(request):
