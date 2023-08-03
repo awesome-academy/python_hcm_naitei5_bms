@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.urls import reverse,reverse_lazy
 from .mail import send_mail_custom
 from django.http import HttpResponse
+from django.contrib import messages
 
 # Create your views here.
 def index(request):
@@ -141,6 +142,27 @@ def tour_rating_comment(request, pk):
 
     return render(request, 'tour_booking/tour_detail.html', {'tour': tour, 'rating_comment_form': rating_comment_form})
 
+# Admin Approve
+
+def approve_tours(request):
+    if request.method == 'POST':
+        selected_bookings = request.POST.getlist('selected_bookings')
+        action = request.POST.get('action')
+
+        if action == 'approve':
+            Booking.objects.filter(pk__in=selected_bookings).update(is_approved=True, status='Confirmed')
+        elif action == 'cancel':
+            Booking.objects.filter(pk__in=selected_bookings, status='Pending').update(is_cancelled=True, status='Cancelled')
+        elif action == 'delete':
+            bookings_to_delete = Booking.objects.filter(pk__in=selected_bookings)
+            confirmed_or_pending_bookings = bookings_to_delete.filter(status__in=['Pending', 'Confirmed'])
+            if confirmed_or_pending_bookings.exists():
+                messages.error(request, "Không thể xóa các đơn đặt đang chờ xử lý hoặc được xác nhận.")
+            else:
+                bookings_to_delete.filter(status='Cancelled').delete()
+
+    bookings = Booking.objects.all()  # Lấy tất cả các đơn đặt tour
+    return render(request, 'admin/approve_tours.html', {'bookings': bookings})
 # Sign Up
 
 def sign_up(request):
