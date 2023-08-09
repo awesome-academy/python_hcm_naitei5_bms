@@ -13,4 +13,5 @@ urlpatterns = [
     path("signup/send-mail-success/", views.send_mail_success, name="send-mail-success"),
     path('tour/<int:pk>/rate-comment/', views.tour_rating_comment, name='tour-rating-comment'),
     path('approve-tours/', views.approve_tours, name='approve-tours'),
+    path('upload-tour-data/', views.upload_tour_data, name='upload_tour_data'),
 ]
