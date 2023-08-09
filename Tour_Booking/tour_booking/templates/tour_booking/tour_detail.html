@@ -1,8 +1,16 @@
 {% extends 'base_generic.html' %}
 {% load i18n %}
+{% load custom_tags %}
 
 {% block content %}
   <h2>{{ tour.name }}</h2>
+  <p>{% trans "Like: "%} 
+    {% if user|favorite_tour:tour %}
+    <a href="{% url 'toggle-favorite-tour' tour.id %}" class="favorite-heart">❤️</a>
+    {% else %}
+    <a href="{% url 'toggle-favorite-tour' tour.id %}" class="favorite-heart">🤍</a>
+    {% endif %}
+  </p>
   <p>{% trans "Description:" %} {{ tour.description }}</p>
   <p>{% trans "Price:" %} {{ tour.price }}</p>
   <p>{% trans "Date:" %} {{ tour.date }}</p>
