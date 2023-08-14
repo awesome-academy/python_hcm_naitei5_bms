@@ -104,18 +104,27 @@ class Booking(models.Model):
         return f"{self.user.username} - {self.tour.name} - {self.status}"
 
 class Rating(models.Model):
-    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     content = models.TextField()
-    create_time = models.DateTimeField(auto_now_add= True)
+    create_time = models.DateTimeField(auto_now_add=True)
+    reply = models.ForeignKey('Reply', on_delete=models.CASCADE, blank=True, null=True, related_name='replies_to')
 
     def get_star_rating(self):
         return "★" * self.rating
 
     def __str__(self):
         return f"{self.user.username} - {self.tour.name} - {self.rating}"
+
+class Reply(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    create_time = models.DateTimeField(auto_now_add=True)
+    parent_comment = models.ForeignKey(Rating, on_delete=models.CASCADE, related_name='replies', default=None) 
+
+    def __str__(self):
+        return f"{self.user.username} - {self.content}"
 
 class FavoriteTour(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
