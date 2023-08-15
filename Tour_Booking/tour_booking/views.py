@@ -3,9 +3,9 @@ import pandas as pd
 import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.translation import gettext as _
-from django.views import generic
-from .models import Tour, Booking, FavoriteTour
-from .forms import TourSearchForm, BookingForm, RatingCommentForm, CustomUserCreationForm
+from django.views import generic, View
+from .models import Tour, Booking, FavoriteTour, Rating, Reply
+from .forms import TourSearchForm, BookingForm, CustomUserCreationForm, RatingForm, ReplyForm
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.utils.http import urlsafe_base64_decode
@@ -15,15 +15,13 @@ from django.utils.translation import gettext
 from django.utils import timezone
 from django.urls import reverse,reverse_lazy
 from .mail import send_mail_custom
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
-from django.shortcuts import render, redirect
 from datetime import datetime
-
 # Create your views here.
 def index(request):
     context = {"title": gettext("Home Page")}
@@ -84,32 +82,37 @@ def search_view(request):
     }
     return render(request, 'tour_booking/tour_list.html', context)
 
-# Tour_Detail & Book_tour
-class TourDetailView(generic.DetailView):
-    model = Tour
-    template_name = 'tour_booking/tour_detail.html'
+# Book_tour
+class BookTourView(View):
+    template_name = 'tour_booking/book_tour.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = BookingForm()
-        return context
+    def get(self, request, *args, **kwargs):
+        tour = Tour.objects.get(pk=self.kwargs['tour_id'])
+        form = BookingForm()
+        context = {'tour': tour, 'form': form}
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
-        tour = self.get_object()
+        tour = Tour.objects.get(pk=self.kwargs['tour_id'])
         form = BookingForm(request.POST)
         if form.is_valid():
-            booking = form.save(commit=False)
-            booking.user = request.user
-            booking.tour = tour
-            booking.status = 'Pending'
-            booking.price = tour.price * int(form.cleaned_data['number_of_people'])
-            booking.save()
-
-            return redirect(reverse('tour-detail', args=[str(tour.pk)]))
+            current_date = timezone.now().date()
+            departure_date = form.cleaned_data['departure_date'].date()
+            if departure_date > current_date:
+                booking = form.save(commit=False)
+                booking.user = request.user
+                booking.tour = tour
+                booking.status = 'Pending'
+                booking.price = tour.price * int(form.cleaned_data['number_of_people'])
+                booking.save()
+                return redirect(reverse('tour-detail', args=[str(tour.pk)]))
+            else:
+                error_message = _('Bạn chỉ được đặt tour cho tương lai.')
+                context = {'tour': tour, 'form': form, 'error_message': error_message}
+                return render(request, self.template_name, context)
         else:
-            context = self.get_context_data(**kwargs)
-            context['form'] = form
-            return self.render_to_response(context)
+            context = {'tour': tour, 'form': form}
+            return render(request, self.template_name, context)
 
 
 def send_booking_email(user, tour, subject_template, email_template):
@@ -139,34 +142,65 @@ def list_bookings(request):
 
 #Comment
 
-@login_required
-def tour_rating_comment(request, pk):
-    tour = get_object_or_404(Tour, pk=pk)
-
-    try:
-        booking = Booking.objects.filter(user=request.user, tour=tour).first()
-    except Booking.DoesNotExist:
-        booking = None
-
-    if not booking or not booking.is_approved:
-        return HttpResponse("Bạn chưa được admin xác nhận, không thể bình luận.") 
+def tour_detail(request, tour_id):
+    tour = get_object_or_404(Tour, pk=tour_id)
 
     if request.method == 'POST':
-        rating_comment_form = RatingCommentForm(request.POST)
-        if rating_comment_form.is_valid():
-            rating = rating_comment_form.save(commit=False)
+        rating_form = RatingForm(request.POST)
+        reply_form = ReplyForm(request.POST)
+
+        if rating_form.is_valid():
+            return submit_rating(request, tour_id)
+
+    else:
+        rating_form = RatingForm()
+        reply_form = ReplyForm()
+
+    context = {
+        'tour': tour,
+        'rating_comment_form': rating_form,
+        'reply_form': reply_form, 
+    }
+    return render(request, 'tour_booking/tour_detail.html', context)
+
+
+def submit_rating(request, tour_id):
+    tour = get_object_or_404(Tour, pk=tour_id)
+    booking = tour.booking_set.filter(user=request.user, status='Confirmed').first()
+
+    if not booking:
+        return HttpResponse("Bạn chưa được xác nhận đặt tour, không thể bình luận.")
+        
+    if request.method == 'POST':
+        rating_form = RatingForm(request.POST)
+
+        if rating_form.is_valid():
+            rating = rating_form.save(commit=False)
             rating.user = request.user
             rating.tour = tour
             rating.save()
 
-            booking.is_approved = True
-            booking.save()
+    return redirect('tour-detail', tour_id=tour_id)
 
-            return redirect(reverse('tour-detail', args=[str(tour.pk)]))
+@login_required
+def submit_reply_comment(request, pk):
+    parent_comment_id = request.POST.get('parent_comment_id')
+    parent_comment = get_object_or_404(Rating, pk=parent_comment_id)
+
+    if parent_comment.tour.booking_set.filter(user=request.user, status='Confirmed').exists():
+        if request.method == 'POST':
+            replies_comment_form = ReplyForm(request.POST)
+            
+            if replies_comment_form.is_valid():
+                reply_content = replies_comment_form.cleaned_data.get('content')
+                reply = Reply(user=request.user, content=reply_content, parent_comment=parent_comment)
+                reply.save()
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     else:
-        rating_comment_form = RatingCommentForm()
+        return HttpResponse("Bạn chưa được xác nhận đặt tour, không thể bình luận.")
 
-    return render(request, 'tour_booking/tour_detail.html', {'tour': tour, 'rating_comment_form': rating_comment_form})
+
 
 # Admin Approve
 

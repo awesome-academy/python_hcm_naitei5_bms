@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import Booking, Rating
+from .models import Booking, Rating, Reply
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -33,7 +33,8 @@ class BookingForm(forms.ModelForm):
         
         return departure_date
 
-class RatingCommentForm(forms.ModelForm):
+class RatingForm(forms.ModelForm):
+    content = forms.CharField(label="", widget=forms.Textarea(attrs={'class': 'form-control','placeholder': 'Text goes here!!!','rows':'3','cols':'20'}))
     rating = forms.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         label='Rating',
@@ -42,7 +43,13 @@ class RatingCommentForm(forms.ModelForm):
 
     class Meta:
         model = Rating
-        fields = ('rating', 'content')
+        fields = ['rating', 'content']
+
+class ReplyForm(forms.ModelForm):
+    content = forms.CharField(label="", widget=forms.Textarea(attrs={'class': 'form-control','placeholder': 'Text goes here!!!','rows':'2','cols':'20'}))
+    class Meta:
+        model = Reply
+        fields = ['content'] 
 
 
 class CustomUserCreationForm(UserCreationForm):
