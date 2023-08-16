@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'tour_booking.apps.TourBookingConfig',
     'bootstrap5',
+    'api.apps.ApiConfig',
+    'rest_framework',
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -164,3 +166,9 @@ EMAIL_HOST_PASSWORD = os.getenv("PASS")
 
 # Định nghĩa URL để truy cập vào phương tiện (MEDIA_URL)
 MEDIA_URL = '/media/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
