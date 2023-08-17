@@ -1,0 +1,27 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col-md-6 offset-md-3">
+        <div class="card mt-4">
+          <div class="card-header">
+            <h2 class="text-center">Your Profile</h2>
+          </div>
+          <div class="card-body">
+            <p><strong>Account:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>First Name:</strong> {{ user.first_name }}</p>
+            <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+            <!-- Add more fields here -->
+          </div>
+          <div class="card-footer text-center">
+            <a href="{% url 'update_profile' %}" class="btn btn-primary">Edit Profile</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

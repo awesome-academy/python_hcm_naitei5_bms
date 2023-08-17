@@ -22,6 +22,13 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth import update_session_auth_hash
 # Create your views here.
 def index(request):
     context = {"title": gettext("Home Page")}
@@ -366,3 +373,47 @@ def upload_tour_data(request):
             messages.error(request, 'Please upload a valid Excel file.')
 
     return render(request, 'admin/upload_tour_data.html')
+
+@login_required
+def profile(request):
+    user = request.user
+    return render(request, 'profile.html', {'user': user})
+
+@login_required
+def update_profile(request):
+    user = request.user
+    if request.method == 'POST':
+        password_form = PasswordChangeForm(user, request.POST)
+
+        if password_form.is_valid():
+            new_username = request.POST.get('new_username')
+            new_first_name = request.POST.get('new_first_name')
+            new_last_name = request.POST.get('new_last_name')
+            new_password1 = password_form.cleaned_data.get('new_password1')
+
+            if new_username:
+                user.username = new_username
+                user.save()
+
+            if new_first_name:
+                user.first_name = new_first_name
+                user.save()
+
+            if new_last_name:
+                user.last_name = new_last_name
+                user.save()
+
+            if new_password1:
+                user.set_password(new_password1)
+                user.save()
+                update_session_auth_hash(request, user)
+            messages.success(request, 'Your profile has been updated.')
+            
+            return render(request, 'profile.html')
+        else:
+            messages.error(request, 'There was an error in the form.')
+    else:
+        password_form = PasswordChangeForm(user)
+
+    context = {'password_form': password_form}
+    return render(request, 'profile/update_profile.html', context)
